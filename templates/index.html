@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DataScan</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='imagem/logo.jpg') }}">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <img src="{{ url_for('static', filename='imagem/logo2.png') }}">
+    <h2>DataScan</h2>
+  </div>
+</header>
+
+<main id="main-container">
+
+  <!-- UPLOAD -->
+  <div id="upload-view">
+    <section class="intro">
+      <h1>Analise seus dados <span class="gradient-text">automaticamente</span></h1>
+      <p>Gere relatórios inteligentes em segundos.</p>
+    </section>
+
+    <div class="hero">
+      <form id="upload-form" enctype="multipart/form-data">
+        <label for="file-upload" class="custom-dropzone">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+          <span>Arraste seu arquivo ou <strong>clique aqui</strong></span>
+          <div id="file-info" class="file-info"></div>
+          <input type="file" id="file-upload" name="arquivo" accept=".csv,.xlsx,.xls" required>
+        </label>
+
+        <button type="submit" class="btn-primary" id="btn-submit">
+          Gerar relatório
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- RELATÓRIO -->
+  <div id="report-view" style="display:none; width:100%;">
+    <section class="intro">
+      <h1>Relatório <span class="gradient-text">DataScan</span></h1>
+      <p id="report-subtitle"></p>
+    </section>
+
+    <!-- SCORE -->
+    <div class="benefits-grid" id="score-container"></div>
+
+    <!-- ALERTAS -->
+    <div class="benefits-grid" id="alerts-container" style="margin-top:20px;"></div>
+
+    <!-- COLUNAS -->
+    <div id="colunas-grid" class="benefits-grid" style="margin-top:40px;"></div>
+
+    <div style="text-align:center; margin-top:40px; display:flex; flex-direction:column; gap:15px;">
+      <button onclick="window.location.reload()" class="btn-primary" style="width:auto; padding:12px 40px;">
+        Nova Análise
+      </button>
+
+      <button id="btn-pdf" class="btn-secondary">
+        <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+      </button>
+    </div>
+  </div>
+
+</main>
+
+<footer>© 2026 — DataScan</footer>
+
+<script>
+const form = document.getElementById('upload-form');
+const fileInput = document.getElementById('file-upload');
+const grid = document.getElementById('colunas-grid');
+const scoreContainer = document.getElementById('score-container');
+const alertsContainer = document.getElementById('alerts-container');
+
+let ultimoRelatorio = null;
+
+fileInput.onchange = () => {
+  if (fileInput.files[0]) {
+    const info = document.getElementById('file-info');
+    info.textContent = fileInput.files[0].name;
+    info.style.display = 'block';
+  }
+};
+
+function classificarScore(score) {
+  if (score >= 80) return { label: "Excelente", color: "#22c55e", icon: "fa-face-smile" };
+  if (score >= 60) return { label: "Bom", color: "#3b82f6", icon: "fa-thumbs-up" };
+  if (score >= 40) return { label: "Atenção", color: "#f59e0b", icon: "fa-triangle-exclamation" };
+  return { label: "Crítico", color: "#ef4444", icon: "fa-skull-crossbones" };
+}
+
+form.onsubmit = async (e) => {
+  e.preventDefault();
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Analisando...';
+
+  const res = await fetch('/upload', {
+    method: 'POST',
+    body: new FormData(form)
+  });
+
+  const data = await res.json();
+  ultimoRelatorio = data;
+
+  btn.disabled = false;
+  btn.innerHTML = 'Gerar relatório';
+
+  document.getElementById('upload-view').style.display = 'none';
+  document.getElementById('report-view').style.display = 'block';
+
+  document.getElementById('report-subtitle').innerHTML =
+    `Arquivo: <b>${data.nome_arquivo}</b> | Total: <b>${data.resumo.linhas} linhas</b>`;
+
+  grid.innerHTML = '';
+  scoreContainer.innerHTML = '';
+  alertsContainer.innerHTML = '';
+
+  /* ========= COLUNAS ========= */
+  for (const [coluna, info] of Object.entries(data.detalhes)) {
+    const q = info.qualidade;
+
+    let stats = '';
+    for (const [k, v] of Object.entries(info.stats)) {
+      stats += `<p style="font-size:0.9rem">${k}: <b>${v}</b></p>`;
+    }
+
+    const card = document.createElement('div');
+    card.className = 'benefit-card';
+    card.style.textAlign = 'left';
+
+    card.innerHTML = `
+      <h3>${coluna}</h3>
+      <p style="font-size:0.75rem; color:var(--primary); font-weight:bold;">
+        TIPO: ${info.tipo.toUpperCase()}
+      </p>
+
+      ${stats}
+
+      <div style="margin-top:10px; background:#f1f5f9; padding:10px; border-radius:8px;">
+        <p>Nulos: <b>${q.nulos} (${q.nulos_pct}%)</b></p>
+        <p>Duplicados: <b>${q.duplicados}</b></p>
+        ${q.outliers !== undefined ? `<p>Outliers: <b>${q.outliers}</b></p>` : ''}
+        <p style="margin-top:6px;font-weight:600;">
+          Score da coluna: <b>${info.score}/100</b>
+        </p>
+      </div>
+    `;
+
+    grid.appendChild(card);
+  }
+
+  /* ========= SCORE GERAL ========= */
+  const score = data.score_geral;
+  const status = classificarScore(score);
+
+  scoreContainer.innerHTML = `
+    <div class="benefit-card" style="border-left:6px solid ${status.color}">
+      <i class="fa-solid ${status.icon}" style="font-size:2rem; color:${status.color}"></i>
+      <h3>Score Geral</h3>
+      <p style="font-size:2.4rem; font-weight:800; color:${status.color}">
+        ${score}/100
+      </p>
+      <p style="font-weight:600; color:${status.color}">
+        ${status.label}
+      </p>
+    </div>
+  `;
+
+  /* ========= ALERTAS ========= */
+  alertsContainer.innerHTML = data.alertas_globais.length
+    ? data.alertas_globais.map(a =>
+        `<div class="benefit-card" style="border-left:6px solid #f59e0b">
+          <i class="fa-solid fa-triangle-exclamation" style="color:#f59e0b"></i>
+          ${a}
+        </div>`
+      ).join('')
+    : `<div class="benefit-card" style="border-left:6px solid #22c55e">
+         <i class="fa-solid fa-check" style="color:#22c55e"></i>
+         Nenhum problema crítico encontrado
+       </div>`;
+};
+
+document.getElementById('btn-pdf').onclick = async () => {
+  const res = await fetch('/exportar-pdf', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ultimoRelatorio)
+  });
+
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'relatorio.pdf';
+  a.click();
+};
+</script>
+
+</body>
+</html>
