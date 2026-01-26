@@ -1,0 +1,330 @@
+/* ================= CONFIGURAÇÕES GERAIS ================= */
+:root {
+  --primary: #10b981;
+  --primary-hover: #059669;
+  --dark: #0f172a;
+  --text-main: #1e293b;
+  --text-light: #64748b;
+  --border: #e2e8f0;
+  --shadow-idle: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  --success: #22c55e;
+  --warning: #f59e0b;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background-color: #ffffff;
+  background-image: radial-gradient(#e2e8f0 0.8px, transparent 0.8px);
+  background-size: 30px 30px;
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= HEADER ================= */
+header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 56px;
+  padding: 0 1rem;
+
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo img {
+  height: 28px;
+}
+
+.logo h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+/* ================= MAIN ================= */
+main {
+  flex: 1;
+  scroll-margin-top: 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* 🔥 centraliza visualmente */
+  padding: 3rem 1.25rem 4rem;
+  gap: 3.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ================= INTRO ================= */
+.intro {
+  max-width: 680px;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1rem;
+  letter-spacing: -0.04em;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, var(--primary), #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.intro p {
+  text-align: center;
+  color: var(--text-light);
+}
+
+/* ================= HERO ================= */
+.hero {
+  margin:auto;
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 1.8rem;
+  box-shadow: var(--shadow-idle);
+}
+
+.hero.loading {
+  transform: scale(0.96);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* ================= UPLOAD ================= */
+.custom-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px dashed var(--border);
+  border-radius: 18px;
+  padding: 2.5rem 1.25rem;
+  cursor: pointer;
+  margin-bottom: 1.6rem;
+  background-color: #fafafa;
+}
+
+.custom-dropzone:hover,
+.custom-dropzone.drag-active {
+  border-color: var(--primary);
+  background-color: #ecfdf5;
+}
+
+.custom-dropzone i {
+  font-size: 2.4rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.file-info {
+  display: none;
+  background-color: #eef2ff;
+  color: #4338ca;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  border: 1px solid #c7d2fe;
+}
+
+#file-upload {
+  display: none;
+}
+
+/* ================= BOTÕES ================= */
+.btn-primary {
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--dark);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin:auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-primary:hover {
+  background-color: #1e293b;
+}
+
+.btn-secondary {
+  margin-top: 1.2rem;
+  padding: 0.85rem 1.3rem;
+  background-color: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+/* ================= SEÇÕES ================= */
+.benefits,
+.quality {
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* TÍTULOS DAS SEÇÕES */
+.benefits h2,
+.quality h2 {
+  text-align: center;
+  font-size: 1.6rem;
+  margin-bottom: 0.8rem;
+}
+
+/* SUBTÍTULO / DESCRIÇÃO */
+.benefits p,
+.quality p.section-description {
+  text-align: center;
+  color: var(--text-light);
+  max-width: 620px;
+  margin: 0 auto 2.2rem auto;
+}
+
+/* ================= GRIDS ================= */
+.benefits-grid,
+.quality-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.8rem;
+  
+}
+
+
+.quality-desc {
+  margin-bottom: 2.2rem;
+}
+
+/* ================= CARDS ================= */
+.benefit-card,
+.quality-card {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 1.6rem;
+  box-shadow: var(--shadow-idle);
+}
+
+.benefit-card {
+  text-align: center;
+}
+
+.benefit-card i {
+  font-size: 1.6rem;
+  color: var(--primary);
+  margin-bottom: 0.8rem;
+}
+
+/* ================= QUALITY ================= */
+.quality-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.badge {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #ffffff;
+
+  flex-shrink: 0;
+}
+
+.badge.ok {
+  background-color: var(--success);
+}
+
+.badge.warn {
+  background-color: var(--warning);
+}
+
+/* ================= FOOTER ================= */
+footer {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+/* ================= TABLET ================= */
+@media (min-width: 768px) {
+  .benefits-grid,
+  .quality-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+}
+
+/* ================= DESKTOP ================= */
+@media (min-width: 1024px) {
+  header {
+    min-height: 68px;
+  }
+
+  .logo img {
+    height: 34px;
+  }
+
+  .logo h2 {
+    font-size: 1.4rem;
+  }
+
+  h1 {
+    font-size: 3rem;
+  }
+
+  .hero {
+    max-width: 560px;
+    padding: 2.5rem;
+  }
+}
