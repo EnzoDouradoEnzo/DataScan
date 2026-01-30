@@ -1,0 +1,10 @@
+flask
+werkzeug
+pyinstaller
+pywebview
+pywin32
+reportlab
+pandas
+openpyxl
+xlrdortlab==4.0.8
+werkzeug==3.0.1
