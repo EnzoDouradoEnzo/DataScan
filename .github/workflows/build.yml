@@ -10,34 +10,29 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # ✅ Checkout atualizado
       - name: Baixar projeto
         uses: actions/checkout@v4
 
-      # ✅ Setup Python atualizado
       - name: Instalar Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # ✅ Instalar dependências
       - name: Instalar dependências
         run: |
-          pip install -r requirements.txt
+          pip install pyinstaller
+          pip install flask pandas openpyxl pywebview
 
-      # ✅ Gerar executável
-      - name: Gerar Executável Windows
+      - name: Gerar Executável
         run: |
           pyinstaller --onefile --noconsole ^
-            --hidden-import=pandas ^
-            --hidden-import=openpyxl ^
+            --hidden-import=webview ^
             --add-data "templates;templates" ^
             --add-data "static;static" ^
-            main.py
+            app.py
 
-      # ✅ Upload Artifact atualizado (CORREÇÃO PRINCIPAL)
-      - name: Salvar Executável Final
+      - name: Salvar Executável
         uses: actions/upload-artifact@v4
         with:
           name: DataScan-EXE
-          path: dist/main.exe
+          path: dist/app.exe
