@@ -252,3 +252,5 @@ def exportar_pdf():
         as_attachment=True,
         download_name=nome_pdf,
     )
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
