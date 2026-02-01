@@ -11,13 +11,11 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.units import cm
 from reportlab.lib.colors import HexColor
 
+
 # ================= FUNÇÃO PARA PYINSTALLER =================
 def resource_path(relative_path):
-    """
-    Corrige caminhos quando o app roda empacotado no .exe
-    """
     try:
-        base_path = sys._MEIPASS  # PyInstaller temp folder
+        base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
 
@@ -27,7 +25,7 @@ def resource_path(relative_path):
 # ================= CONFIG =================
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"csv", "xlsx", "xls"}
-MAX_FILE_SIZE = 20 * 1024 * 1024  # 20MB
+MAX_FILE_SIZE = 20 * 1024 * 1024
 
 # ================= APP ====================
 app = Flask(
@@ -39,7 +37,6 @@ app = Flask(
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
 
-# Cria pasta uploads sempre que iniciar
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 motor = AnalisadorDados()
@@ -87,6 +84,28 @@ def upload():
 
 
 # ================= PDF ====================
+
+def quebrar_texto(texto, max_chars=60):
+    """
+    Divide texto longo em várias linhas automaticamente
+    """
+    palavras = texto.split()
+    linhas = []
+    linha_atual = ""
+
+    for palavra in palavras:
+        if len(linha_atual) + len(palavra) < max_chars:
+            linha_atual += palavra + " "
+        else:
+            linhas.append(linha_atual.strip())
+            linha_atual = palavra + " "
+
+    if linha_atual:
+        linhas.append(linha_atual.strip())
+
+    return linhas
+
+
 def gerar_pdf(relatorio: dict, caminho_pdf: str):
     c = canvas.Canvas(caminho_pdf, pagesize=A4)
     largura, altura = A4
@@ -99,13 +118,8 @@ def gerar_pdf(relatorio: dict, caminho_pdf: str):
     cinza = HexColor("#64748b")
     fundo = HexColor("#f8fafc")
 
-    def nova_pagina():
-        c.showPage()
-        desenhar_header()
-        return altura - 3.5 * cm
-
+    # ================= HEADER =================
     def desenhar_header():
-        # Faixa superior
         c.setFillColor(azul)
         c.rect(0, altura - 2.5 * cm, largura, 2.5 * cm, fill=1, stroke=0)
 
@@ -120,20 +134,26 @@ def gerar_pdf(relatorio: dict, caminho_pdf: str):
             f"Arquivo: {relatorio['nome_arquivo']}",
         )
 
+    def nova_pagina():
+        c.showPage()
+        desenhar_header()
+        return altura - 3.5 * cm
+
     desenhar_header()
     y = altura - 3.5 * cm
 
     resumo = relatorio["resumo"]
 
-    # ===== CARD RESUMO =====
+    # ================= CARD RESUMO =================
     c.setFillColor(fundo)
     c.roundRect(2 * cm, y - 2.2 * cm, largura - 4 * cm, 2 * cm, 10, fill=1)
+
     c.setFillColor(cinza)
     c.setFont("Helvetica", 11)
     c.drawString(2.5 * cm, y - 0.9 * cm, f"Linhas: {resumo['linhas']}")
     c.drawString(7 * cm, y - 0.9 * cm, f"Colunas: {resumo['colunas']}")
 
-    # ===== SCORE GERAL =====
+    # ================= SCORE =================
     score = relatorio.get("score_geral", 0)
 
     if score >= 80:
@@ -152,42 +172,33 @@ def gerar_pdf(relatorio: dict, caminho_pdf: str):
     c.setFillColor(cor)
     c.setFont("Helvetica-Bold", 24)
     c.drawString(largura - 6 * cm, y - 1.6 * cm, f"{score}/100")
+
     c.setFont("Helvetica-Bold", 12)
     c.drawString(largura - 6 * cm, y - 2.1 * cm, status)
 
     y -= 3 * cm
 
-    # ===== ALERTAS GLOBAIS =====
-    alertas = relatorio.get("alertas_globais", [])
-    if alertas:
-        c.setFont("Helvetica-Bold", 13)
-        c.setFillColor(HexColor("#000000"))
-        c.drawString(2 * cm, y, "Alertas Globais")
-        y -= 0.6 * cm
-
-        c.setFont("Helvetica", 10)
-        c.setFillColor(cinza)
-        for alerta in alertas:
-            if y < 3 * cm:
-                y = nova_pagina()
-            c.drawString(2.5 * cm, y, f"• {alerta}")
-            y -= 0.45 * cm
-
-        y -= 0.6 * cm
-
-    # ===== COLUNAS =====
+    # ================= COLUNAS =================
     for coluna, info in relatorio["detalhes"].items():
-        if y < 6 * cm:
+
+        alertas = info.get("alertas", [])
+
+        # altura dinâmica do card
+        altura_card = 3.5 * cm + (len(alertas) * 0.6 * cm)
+
+        if y < altura_card + 3 * cm:
             y = nova_pagina()
 
+        # CARD FUNDO
         c.setFillColor(fundo)
-        altura_card = 4.2 * cm if info["tipo"] in ["inteiro", "decimal", "data"] else 3.5 * cm
         c.roundRect(2 * cm, y - altura_card, largura - 4 * cm, altura_card, 10, fill=1)
 
+        # TITULO
         c.setFillColor(HexColor("#000000"))
         c.setFont("Helvetica-Bold", 12)
         c.drawString(2.5 * cm, y - 0.6 * cm, coluna)
 
+        # TIPO E SCORE
         c.setFont("Helvetica", 10)
         c.setFillColor(cinza)
         c.drawString(
@@ -196,41 +207,38 @@ def gerar_pdf(relatorio: dict, caminho_pdf: str):
             f"Tipo: {info['tipo']} | Score: {info['score']}/100"
         )
 
+        # STATS
         stats = info["stats"]
         y_cursor = y - 1.6 * cm
+
         for k, v in stats.items():
-            if y_cursor < 3 * cm:
-                y_cursor = nova_pagina() - 1.6 * cm
             c.drawString(2.5 * cm, y_cursor, f"{k}: {v}")
             y_cursor -= 0.45 * cm
 
+        # QUALIDADE
         q = info["qualidade"]
-        linha_qualidade = y_cursor
-
-        q_texto = (
+        texto_q = (
             f"Nulos: {q['nulos']} ({q['nulos_pct']}%) | "
             f"Duplicados: {q['duplicados']} | "
             f"Únicos: {q['unicos']}"
         )
 
-        if "strings_vazias" in q:
-            q_texto += f" | Strings vazias: {q['strings_vazias']}"
-        if "outliers" in q:
-            q_texto += f" | Outliers: {q['outliers']}"
+        c.drawString(2.5 * cm, y_cursor, texto_q)
+        y_cursor -= 0.6 * cm
 
-        c.drawString(2.5 * cm, linha_qualidade, q_texto)
-        y = linha_qualidade - 1.2 * cm
+        # ================= ALERTAS (CORRIGIDO) =================
+        if alertas:
+            c.setFont("Helvetica", 9)
+            c.setFillColor(amarelo)
 
-        if info.get("alertas"):
-            for alerta in info["alertas"]:
-                if y < 3 * cm:
-                    y = nova_pagina()
-                c.setFont("Helvetica", 9)
-                c.setFillColor(amarelo)
-                c.drawString(2.8 * cm, y, f"⚠ {alerta}")
-                y -= 0.4 * cm
+            for alerta in alertas:
+                linhas = quebrar_texto("⚠ " + alerta, max_chars=65)
 
-        y -= 0.6 * cm
+                for linha in linhas:
+                    c.drawString(2.8 * cm, y_cursor, linha)
+                    y_cursor -= 0.45 * cm
+
+        y = y - altura_card - 0.8 * cm
 
     c.save()
 
@@ -252,5 +260,7 @@ def exportar_pdf():
         as_attachment=True,
         download_name=nome_pdf,
     )
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
